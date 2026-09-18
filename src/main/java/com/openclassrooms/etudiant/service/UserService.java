@@ -1,5 +1,6 @@
 package com.openclassrooms.etudiant.service;
 
+import com.openclassrooms.etudiant.dto.LoginResponseDTO;
 import com.openclassrooms.etudiant.entities.User;
 import com.openclassrooms.etudiant.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -23,7 +24,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
 
     public void register(User user) {
         Assert.notNull(user, "User must not be null");
@@ -37,16 +37,29 @@ public class UserService {
         userRepository.save(user);
     }
 
-    public String login(String login, String password) {
+    public LoginResponseDTO login(String login, String password) {
         Assert.notNull(login, "Login must not be null");
         Assert.notNull(password, "Password must not be null");
         Optional<User> user = userRepository.findByLogin(login);
+        LoginResponseDTO responseDTO = new LoginResponseDTO();
+        responseDTO.setLogin(login);
+        if (!user.isPresent()) {
+            responseDTO.setToken(null);
+            responseDTO.setCode(404);
+            responseDTO.setMessage("User not found");
+            
+            return responseDTO; 
+        }
         UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
                 .username(user.get().getLogin())
                 .password(user.get().getPassword())
                 .build();
+            
+        responseDTO.setToken(jwtService.generateToken(userDetails));
+        responseDTO.setCode(200);
+        responseDTO.setMessage("Login successful");
 
-        return jwtService.generateToken(userDetails);
+        return responseDTO;
     }
 
 
