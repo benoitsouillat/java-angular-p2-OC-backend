@@ -31,6 +31,30 @@ public class StudentCrudService {
         }
     }
 
+	public User update(UpdateDTO updateDTO) {
+		try {
+			User user = userRepository.findById(updateDTO.getId())
+					.orElseThrow(() -> new IllegalArgumentException("User with id " + updateDTO.getId() + " not found"));
+			user.setFirstName(updateDTO.getFirstName());
+			user.setLastName(updateDTO.getLastName());
+
+			return userRepository.save(user);
+		} catch (Exception e) {
+			throw new RuntimeException("Error updating user: " + e.getMessage(), e);
+		}
+	}
+
+	public boolean delete(DeleteDTO deleteDTO) {
+		try {
+			User user = userRepository.findById(deleteDTO.getId())
+					.orElseThrow(() -> new IllegalArgumentException("User with id " + deleteDTO.getId() + " not found"));
+			userRepository.delete(user);
+			return true;
+		} catch (Exception e) {
+			throw new RuntimeException("Error deleting user: " + e.getMessage(), e);
+		}
+	}
+
     private boolean verifyExistingUser(String login) {
         return userRepository.findByLogin(login).isPresent();
     }

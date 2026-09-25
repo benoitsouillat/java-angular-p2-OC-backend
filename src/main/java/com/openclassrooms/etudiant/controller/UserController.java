@@ -73,4 +73,29 @@ public class UserController {
          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user");
     }
 
+	@PostMapping("/api/student/update")
+	public ResponseEntity<?> updateStudent(@RequestHeader("Authorization") String authorization, @Valid @RequestBody UpdateDTO updateDTO) {
+		if (!userService.isAuthenticated(authorization)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+		}
+
+		User user = studentCrudService.update(updateDTO);
+		if (user != null) {
+			return ResponseEntity.ok("User " + user.getLogin() + " was updated successfully");
+		}
+
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user");
+	}
+	@PostMapping("/api/student/delete")
+	public ResponseEntity<?> deleteStudent(@RequestHeader("Authorization") String authorization, @Valid @RequestBody DeleteDTO deleteDTO) {
+		if (!userService.isAuthenticated(authorization)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+		}
+
+		if (studentCrudService.delete(deleteDTO)) {
+			return ResponseEntity.ok("User " + deleteDTO.getId() + " was deleted successfully");
+		}
+
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user");
+	}
 }
