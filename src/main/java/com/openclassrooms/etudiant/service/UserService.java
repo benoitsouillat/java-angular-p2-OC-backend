@@ -6,9 +6,6 @@ import com.openclassrooms.etudiant.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,26 +38,44 @@ public class UserService {
         Assert.notNull(login, "Login must not be null");
         Assert.notNull(password, "Password must not be null");
         Optional<User> user = userRepository.findByLogin(login);
-        LoginResponseDTO responseDTO = new LoginResponseDTO();
-        responseDTO.setLogin(login);
         if (!user.isPresent()) {
-            responseDTO.setToken(null);
-            responseDTO.setCode(404);
-            responseDTO.setMessage("User not found");
-            
-            return responseDTO; 
+            return this.createResponse(login, null, 404, "User not found");
         }
+        
         UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
                 .username(user.get().getLogin())
                 .password(user.get().getPassword())
                 .build();
-            
-        responseDTO.setToken(jwtService.generateToken(userDetails));
-        responseDTO.setCode(200);
-        responseDTO.setMessage("Login successful");
+
+        if (this.passwordVerify(password, userDetails)) {
+            String token = jwtService.generateToken(userDetails);
+            return this.createResponse(login, token, 200, password);
+        }
+        if (!this.passwordVerify(password, userDetails)) {
+            return this.createResponse(login, null, 401, "Invalid password");
+        }
+
+        return this.createResponse(login, null, 500, "Internal server error in loginResponseDTO");
+    }
+
+    private boolean passwordVerify(String password, UserDetails userDetails) {
+        return passwordEncoder.matches(password, userDetails.getPassword());
+    }
+
+    private LoginResponseDTO createResponse(String login, String token, Number code, String message) {
+        LoginResponseDTO responseDTO = new LoginResponseDTO();
+        responseDTO.setLogin(login);
+        responseDTO.setToken(token);
+        responseDTO.setCode(code);
+        responseDTO.setMessage(message);
 
         return responseDTO;
     }
 
-
+    public boolean isAuthenticated(String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            return false;
+        }
+        return jwtService.validateToken(token.substring(7));
+    }
 }
