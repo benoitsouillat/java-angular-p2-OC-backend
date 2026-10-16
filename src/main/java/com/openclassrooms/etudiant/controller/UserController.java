@@ -3,9 +3,11 @@ package com.openclassrooms.etudiant.controller;
 import com.openclassrooms.etudiant.dto.LoginRequestDTO;
 import com.openclassrooms.etudiant.dto.LoginResponseDTO;
 import com.openclassrooms.etudiant.dto.RegisterDTO;
+import com.openclassrooms.etudiant.dto.MessageDTO;
 import com.openclassrooms.etudiant.dto.student.CreateDTO;
 import com.openclassrooms.etudiant.dto.student.UpdateDTO;
 import com.openclassrooms.etudiant.dto.student.DeleteDTO;
+import com.openclassrooms.etudiant.dto.user.UserDTO;
 import com.openclassrooms.etudiant.entities.User;
 import com.openclassrooms.etudiant.mapper.UserDtoMapper;
 import com.openclassrooms.etudiant.service.UserService;
@@ -58,44 +60,73 @@ public class UserController {
     @PostMapping("/api/student")
     public ResponseEntity<?> createStudent(@RequestHeader("Authorization") String authorization , @Valid @RequestBody CreateDTO createDTO ) {
          if(!userService.isAuthenticated(authorization)) {
-             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
-         }
-         if(!userService.isAuthenticated(authorization)) {
-             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageDTO("Unauthorized"));
          }
 
          User user = studentCrudService.create(createDTO);
          if (user != null)
          {
-             return ResponseEntity.status(HttpStatus.CREATED).body("User " + user.getLogin() + " was created successfully");
+             return ResponseEntity.status(HttpStatus.CREATED).body(new MessageDTO("User " + user.getLogin() + " was created successfully"));
          }
 
-         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user");
+         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageDTO("Error creating user"));
     }
 
 	@PostMapping("/api/student/update")
 	public ResponseEntity<?> updateStudent(@RequestHeader("Authorization") String authorization, @Valid @RequestBody UpdateDTO updateDTO) {
 		if (!userService.isAuthenticated(authorization)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageDTO("Unauthorized"));
 		}
 
 		User user = studentCrudService.update(updateDTO);
 		if (user != null) {
-			return ResponseEntity.ok("User " + user.getLogin() + " was updated successfully");
+			return ResponseEntity.ok(new MessageDTO("User " + user.getLogin() + " was updated successfully"));
 		}
-
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user");
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageDTO("Error updating user ..."));
 	}
+
 	@PostMapping("/api/student/delete")
 	public ResponseEntity<?> deleteStudent(@RequestHeader("Authorization") String authorization, @Valid @RequestBody DeleteDTO deleteDTO) {
 		if (!userService.isAuthenticated(authorization)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageDTO("Unauthorized"));
 		}
 
 		if (studentCrudService.delete(deleteDTO)) {
-			return ResponseEntity.ok("User " + deleteDTO.getId() + " was deleted successfully");
+			return ResponseEntity.ok(new MessageDTO("User " + deleteDTO.getId() + " was deleted successfully"));
 		}
 
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating user");
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageDTO("Error updating user"));
+	}
+
+	@PostMapping("/api/user/info")
+	public ResponseEntity<?> getCurrentUserInfo(@RequestHeader("Authorization") String authorization) {
+		if (!userService.isAuthenticated(authorization)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageDTO("Unauthorized"));
+		}
+		UserDTO userDTO = userService.getCurrentUserInfo(authorization);
+		if (userDTO != null) {
+			return ResponseEntity.ok(userDTO);
+		}
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageDTO("Error getting user info"));
+	}
+
+	@PostMapping("/api/user")
+	public ResponseEntity<?> getUser(@RequestHeader("Authorization") String authorization, @Valid @RequestBody UserDTO userDTO) {
+		if (!userService.isAuthenticated(authorization)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageDTO("Unauthorized"));
+		}
+		UserDTO user = userService.getUserById(userDTO.getId());
+		if (user != null) {
+			return ResponseEntity.ok(user);
+		}
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageDTO("User not found"));
+	}
+
+	@PostMapping("/api/users")
+	public ResponseEntity<?> getAllUsers(@RequestHeader("Authorization") String authorization) {
+		if (!userService.isAuthenticated(authorization)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageDTO("Unauthorized"));
+		}
+		return ResponseEntity.ok(userService.getAllUsers());
 	}
 }

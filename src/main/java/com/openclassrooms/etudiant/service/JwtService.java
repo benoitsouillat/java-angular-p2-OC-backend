@@ -20,6 +20,10 @@ public class JwtService {
     private final JwtEncoder jwtEncoder;
     private final JwtDecoder jwtDecoder;
 
+	public String extractUsername(String token) {
+		return this.jwtDecoder.decode(token).getSubject();
+	}
+
     public String generateToken(UserDetails userDetails) {
         Instant now = Instant.now();
         JwtClaimsSet claims = JwtClaimsSet.builder()
@@ -32,7 +36,7 @@ public class JwtService {
                 JwsHeader.with(MacAlgorithm.HS256).build(), claims);
         return this.jwtEncoder.encode(params).getTokenValue();
     }
-    
+
     public boolean validateToken(String token) {
         try {
             this.jwtDecoder.decode(token);

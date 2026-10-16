@@ -33,21 +33,22 @@ public class StudentCrudService {
 
 	public User update(UpdateDTO updateDTO) {
 		try {
-			User user = userRepository.findById(updateDTO.getId())
-					.orElseThrow(() -> new IllegalArgumentException("User with id " + updateDTO.getId() + " not found"));
-			user.setFirstName(updateDTO.getFirstName());
-			user.setLastName(updateDTO.getLastName());
+			User user = userRepository.getReferenceById(updateDTO.getId());
+					//.orElseThrow(() -> new IllegalArgumentException("User with id " + updateDTO.getId() + " not found"));
+			user.setFirstName(updateDTO.getFirstName() != null ? updateDTO.getFirstName() : user.getFirstName());
+			user.setLastName(updateDTO.getLastName() != null ? updateDTO.getLastName() : user.getLastName());
+			user.setPassword(updateDTO.getPassword() != null ? updateDTO.getPassword() : user.getPassword());
 
 			return userRepository.save(user);
 		} catch (Exception e) {
-			throw new RuntimeException("Error updating user: " + e.getMessage(), e);
+			throw new RuntimeException("Error updating user ... : " + e.getMessage(), e);
 		}
 	}
 
 	public boolean delete(DeleteDTO deleteDTO) {
 		try {
-			User user = userRepository.findById(deleteDTO.getId())
-					.orElseThrow(() -> new IllegalArgumentException("User with id " + deleteDTO.getId() + " not found"));
+			User user = userRepository.getReferenceById(deleteDTO.getId());
+					//.orElseThrow(() -> new IllegalArgumentException("User with id " + deleteDTO.getId() + " not found"));
 			userRepository.delete(user);
 			return true;
 		} catch (Exception e) {
